@@ -1,2 +1,2 @@
-# CPP-Leetcode
+# leetcode.cpp
 Leetcoding with C++

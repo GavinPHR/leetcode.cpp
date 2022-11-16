@@ -1,37 +1,22 @@
-#include <vector>
-#include <iostream>
-#include <algorithm>
-
-using namespace std;
-
 class Solution {
 public:
     int trap(vector<int>& height) {
-        int left = 0, right = height.size() - 1;
-        int max_left = 0, max_right = 0;
+        int i = 0;
+        int j = height.size() - 1;
+        int left_max = 0;
+        int right_max = 0;
         int ans = 0;
-        while (left <= right) { 
-            while (left <= right && height[left] <= height[right]) {
-                max_left = max(max_left, height[left]);
-                ans += max_left - height[left];
-                ++left;
-            }
-            while (left <= right && height[right] <= height[left]) {
-                max_right = max(max_right, height[right]);
-                ans += max_right - height[right];
-                --right;
+        while (i < j) {
+            if (height[i] < height[j]) {
+                left_max = max(left_max, height[i]);
+                ans += left_max - height[i];
+                ++i;
+            } else {
+                right_max = max(right_max, height[j]);
+                ans += right_max - height[j];
+                --j;
             }
         }
         return ans;
     }
 };
-
-int main(int argc, char const *argv[])
-{
-    Solution s = Solution();
-    vector<int> v = {0,1,0,2,1,0,1,3,2,1,2,1}; // 6
-    cout << s.trap(v) << "\n";
-    v = vector<int>{4,2,0,3,2,5}; // 9
-    cout << s.trap(v);
-    return 0;
-}

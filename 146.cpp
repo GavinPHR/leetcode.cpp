@@ -1,95 +1,75 @@
-#include <iostream>
-#include <unordered_map>
+class Node {
+public:
+    Node(int key, int val) {
+        this->key = key;
+        this->val = val;
+    }
 
-using namespace std;
-
-struct Node {
-    int key, value;
-    Node *next, *prev;
+    Node *prev = nullptr;
+    Node *next = nullptr;
+    int key;
+    int val;
 };
 
 class LRUCache {
-public:
-    Node *head, *tail;
-    unordered_map<int, Node*> map;
+    Node *head;
+    Node *tail;
+    unordered_map<int, Node*> m;
     int capacity;
 
+    void pop(Node *node) {
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
+    }
+
+    void insert(Node *left, Node *right, Node *node) {
+        left->next = node;
+        node->prev = right->prev;
+        right->prev = node;
+        node->next = right;
+    }
+public:
     LRUCache(int capacity) {
         this->capacity = capacity;
-        head = new Node;
-        tail = new Node;
+        head = new Node(0, 0);
+        tail = new Node(0, 0);
         head->next = tail;
         tail->prev = head;
     }
     
     int get(int key) {
-        if (map.find(key) != map.end()) {
-            update(map[key], map[key]->value);
-            return map[key]->value;
-        } else {
-            return -1;
-        }
+        auto it = m.find(key);
+        if (it == m.end()) return -1;
+        auto node = it->second;
+        // move out
+        pop(node);
+        // insert at end
+        insert(tail->prev, tail, node);
+
+        return (it->second)->val;
     }
     
     void put(int key, int value) {
-        if (map.find(key) != map.end()) {
-            update(map[key], value);
+        auto it = m.find(key);
+        if (it != m.end()) {
+            (it->second)->val = value;
+            get(key);
             return;
         }
-        if (map.size() == capacity) {
-            map.erase(tail->prev->key);
-            remove(tail->prev);
-        } 
-        Node *new_node = new Node{key, value};
-        map[key] = new_node;
-        insert_front(new_node);
-    }
-private:
-    void update(Node *node, int value) {
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
-        node->value = value;
-        insert_front(node);
-    }
-
-    void remove(Node *node) {
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
-        delete node;
-    }
-
-    void insert_front(Node *node) {
-        node->next = head->next;
-        node->prev = head;
-        head->next->prev = node;
-        head->next = node;
+        // evict first
+        if (m.size() == capacity) {
+            auto evict = head->next;
+            pop(evict);
+            m.erase(evict->key);
+            delete evict;
+        }
+        auto node = new Node(key, value);
+        m[key] = node;
+        insert(tail->prev, tail, node);
     }
 
 };
 
-void print(Node *head) {
-    while (head) {
-        cout << "(" << head->key << " " << head->value << ")";
-        head = head->next;
-    }
-    cout << endl;
-}
-
-int main(int argc, char const *argv[]) {
-    LRUCache *obj = new LRUCache(2);
-    obj->put(1, 1); // cache is {1=1}
-    obj->put(2, 2); // cache is {1=1, 2=2}
-    cout << obj->get(1) << endl;    // return 1
-    // print(obj->head);
-    obj->put(3, 3); // LRU key was 2, evicts key 2, cache is {1=1, 3=3}
-    // print(obj->head);
-    cout << obj->get(2) << endl;    // returns -1 (not found)
-    obj->put(4, 4); // LRU key was 1, evicts key 1, cache is {4=4, 3=3}
-    cout << obj->get(1) << endl;    // return -1 (not found)
-    cout << obj->get(3) << endl;    // return 3
-    cout << obj->get(4) << endl;    // return 4
-    return 0;
-}
 /**
  * Your LRUCache object will be instantiated and called as such:
  * LRUCache* obj = new LRUCache(capacity);
